@@ -5,13 +5,16 @@ def menu () -> str:
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
             MENU BANCARIO
         
-        [d] - Depositar
-        [s] - Sacar
-        [e] - Extrato
+        [d]\t Depositar
+        [s]\t Sacar
+        [e]\t Extrato
+        [nu]\t Novo usuario
+        [nc]\t Nova conta
         [q] - Sair      
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 => """)
+
 
 def depositar(valor: float, saldo: float, extrato: str) -> tuple[float, str]:
     if valor > 0:
@@ -24,7 +27,17 @@ def depositar(valor: float, saldo: float, extrato: str) -> tuple[float, str]:
         return saldo, extrato
 
 
-def sacar(valor: float, saldo: float, limite: float, extrato: str, num_saques: int, limite_saques: int) -> tuple[float, str, int]:
+def mostrar_extrato(extrato: str) -> None:
+    print("EXTRATO".center(24, "="), end='\n\n')
+    print("Não foram realizadas movimentações." if not extrato else extrato)
+    print(f"\nSaldo: R$ {saldo:.2f}")
+    print(f"Limite de saque: R$ {limite:.2f}")
+    print(f"Limite de saques: {LIMITE_SAQUES}")
+    print(f"Total de saques: {saques}")
+    print("=" * 24)
+
+
+def sacar(valor: float, saldo: float, limite: float, extrato: str, num_saques: int, *,  limite_saques: int) -> tuple[float, str, int]:
     if valor <= 0:
         print("Operação inválida. O valor do saque deve ser maior que zero.")
     elif valor > saldo:
@@ -43,13 +56,55 @@ def sacar(valor: float, saldo: float, limite: float, extrato: str, num_saques: i
     return saldo, extrato, num_saques
 
 
+def criar_usuario(usuarios: list[dict]) -> None:
+    cpf = input("\nInforme apenas os números do CPF:")
+    usuario = filtrar_usuario(cpf, usuarios)
+    if usuario:
+        print("CPF já cadastrado. Tente novamente.")
+        return
+    nome = input("\nInforme o nome do usuário:")
+    data_nasc = input("\nInforme a data de nascimento do usuário:")
+    telefone = input("\nInforme o telefone do usuário:")
+    endereco = input("\nInforme o endereco do usuário:")
+    usuarios.append({
+        "cpf": cpf,
+        "nome": nome,
+        "data_nasc": data_nasc,
+        "telefone": telefone,
+        "endereco": endereco
+    })
+
+    print(" Usuário cadastrado com sucesso ".center(80, "="))
+    
+
+def filtrar_usuario(cpf: str, usuarios: list[dict]) -> dict[str: str]:
+    return next((usuario for usuario in usuarios if usuario["cpf"] == cpf), None)
 
 
+def criar_conta(agencia: str, num_conta: int, contas: list[dict], usuarios: list[dict]) -> None:
+    cpf = input("\nInforme apenas os números do CPF: ")
+    usuario = filtrar_usuario(cpf, usuarios)
+    if usuario:
+        contas.append({
+            "agencia": agencia,
+            "num_conta": num_conta,
+            "saldo": 0.0,
+            "usuario": usuario
+        })
+        print("\nConta criada com sucesso.")
+        return
+    
+    print("\nUsuário não encontrado")
+    
 
 saldo, saques, limite = 0.0, 0, 500
 extrato = ""
 
 LIMITE_SAQUES = 3
+AGENCIA = "0001"
+
+usuarios = []
+contas = []
 
 while True:
     op = menu().lower();
@@ -62,15 +117,14 @@ while True:
     elif op == "s":
         print("SAQUE".center(24, "="), end='\n\n')
         valor = float(input("Valor do saque: R$ "))
-        saldo, extrato, saques = sacar(valor, saldo, limite, extrato, saques, LIMITE_SAQUES)
+        saldo, extrato, saques = sacar(valor, saldo, limite, extrato, saques, limite_saques=LIMITE_SAQUES)
     elif op == "e":
-        print("EXTRATO".center(24, "="), end='\n\n')
-        print("Não foram realizadas movimentações." if not extrato else extrato)
-        print(f"\nSaldo: R$ {saldo:.2f}")
-        print(f"Limite de saque: R$ {limite:.2f}")
-        print(f"Limite de saques: {LIMITE_SAQUES}")
-        print(f"Total de saques: {saques}")
-        print("=" * 24)
+        mostrar_extrato(extrato)
+    elif op == "nu":
+        criar_usuario(usuarios)
+    elif op == "nc":
+        num_conta = max(contas["num_conta"]) + 1
+        criar_conta(AGENCIA, num_conta, contas, usuarios)
     elif op == "q":
         print("\nSaindo..")
         break
